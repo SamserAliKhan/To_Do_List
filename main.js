@@ -1,62 +1,71 @@
-window.addEventListener('load', () => {
-	const form = document.querySelector("#new-task-form");
-	const input = document.querySelector("#new-task-input");
-	const list_el = document.querySelector("#tasks");
+const express = require("express");
+const mongoose = require('mongoose');
+const bodyParser = require("body-parser");
 
-	form.addEventListener('submit', (e) => {
-		e.preventDefault();
+const app=express();
 
-		const task = input.value;
+app.use(express.urlencoded({ extended: true }));
 
-		const task_el = document.createElement('div');
-		task_el.classList.add('task');
+//app.use(bodyParser.json());
 
-		const task_content_el = document.createElement('div');
-		task_content_el.classList.add('content');
+app.use(express.static("public"));
 
-		task_el.appendChild(task_content_el);
+mongoose.connect('mongodb://127.0.0.1:27017/toDoListDB',{ useNewUrlParser: true });
+const itemSchema ={
+	name: String,
+};
 
-		const task_input_el = document.createElement('input');
-		task_input_el.classList.add('text');
-		task_input_el.type = 'text';
-		task_input_el.value = task;
-		task_input_el.setAttribute('readonly', 'readonly');
+const Item=mongoose.model("Item",itemSchema);
 
-		task_content_el.appendChild(task_input_el);
+const item1 = new Item({name:"Welcome to your T-Do list "});
+const item2 = new Item({name:"Hit the + button to add a new item "});
+const item3 = new Item({name:"<-- Hit this to delete an item "});
 
-		const task_actions_el = document.createElement('div');
-		task_actions_el.classList.add('actions');
-		
-		const task_edit_el = document.createElement('button');
-		task_edit_el.classList.add('edit');
-		task_edit_el.innerText = 'Edit';
+const defaultitems = [item1,item2,item3];
+//wrong
 
-		const task_delete_el = document.createElement('button');
-		task_delete_el.classList.add('delete');
-		task_delete_el.innerText = 'Delete';
+// Item.insertMany(defaultitems,function(err){
+// 	if(err){
+// 		console.log(err);
+// 	}
+// 	else{
+// 		console.log("Successfully added items to teh Data base")
+// 	}
+// });
 
-		task_actions_el.appendChild(task_edit_el);
-		task_actions_el.appendChild(task_delete_el);
+//correct
 
-		task_el.appendChild(task_actions_el);
+// Item.insertMany(defaultitems)
+//       .then(function () {
+//         console.log("Successfully saved defult items to DB");
+//       })
+//       .catch(function (err) {
+//         console.log(err);
+//       });
 
-		list_el.appendChild(task_el);
+app.get("/",async (req,res)=>{
+  try{
+    const founditems = await Item.find({});
+    console.log(founditems);
+    res.sendFile("index.html",{root:__dirname,newListItem: founditems});
+  }
+  catch(err){
+    console.log(err)
+  }
+});
+/*app.get("/articles", async (req, res) => {
+  try {
+    const articles = await Article.find({ });
+    res.send(articles);
+    console.log(articles);
+  } catch (err) {
+    console.log(err);
+  }
+}); */
 
-		input.value = '';
+app.post("/",function(req,res){
+	const item = req.body.newItem;
 
-		task_edit_el.addEventListener('click', (e) => {
-			if (task_edit_el.innerText.toLowerCase() == "edit") {
-				task_edit_el.innerText = "Save";
-				task_input_el.removeAttribute("readonly");
-				task_input_el.focus();
-			} else {
-				task_edit_el.innerText = "Edit";
-				task_input_el.setAttribute("readonly", "readonly");
-			}
-		});
-
-		task_delete_el.addEventListener('click', (e) => {
-			list_el.removeChild(task_el);
-		});
-	});
+})
+app.listen(3000,function(){
 });
